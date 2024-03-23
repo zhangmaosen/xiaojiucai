@@ -239,7 +239,7 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         s = self.stem(2 * x - 1.0)
-        for cell in self.pre_process:
+        for cell in self.pre_process: #残差cell过程，参见NVAE
             s = cell(s)
         combiner_cells_enc = []
         combiner_cells_s = []

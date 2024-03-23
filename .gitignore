@@ -161,5 +161,9 @@ cython_debug/
 
 *.pth 
 
-playground/
+playground/*
+!playground/*.ipynb
+!playground/create-stable-diffusion-from-scratch/Stable_Diffusion_From_Scratch_Notebook.ipynb
+
 data/
+/stocknet_data
