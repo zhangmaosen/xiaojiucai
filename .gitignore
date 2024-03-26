@@ -167,3 +167,7 @@ playground/*
 
 data/
 /stocknet_data
+xiaojiucai_data/
+news_data/news.jsonl
+news_data/news.parquet
+news_data/kline.parquet

@@ -1,0 +1,88 @@
+# -*-Encoding: utf-8 -*-
+import os
+import pandas as pd
+
+import torch
+from torch.utils.data import Dataset, DataLoader
+from utils.timefeatures import time_features
+import warnings
+warnings.filterwarnings('ignore')
+
+
+class StandardScaler(object):
+    def __init__(self):
+        self.mean = 0.
+        self.std = 1.
+
+    def fit(self, data):
+        self.mean = data.mean(0)
+        self.std = data.std(0)
+
+    def transform(self, data):
+        mean = torch.from_numpy(self.mean).type_as(data).to(data.device) if torch.is_tensor(data) else self.mean
+        std = torch.from_numpy(self.std).type_as(data).to(data.device) if torch.is_tensor(data) else self.std
+        return (data - mean) / std
+
+
+class Jiucai_Dataset_Custom(Dataset):
+    def __init__(self, root_path, flag='train', size=None, data_path='AAPL.csv'):
+        # size [seq_len, label_len, pred_len]
+        # info
+        self.seq_len = size[0]
+        self.pred_len = size[1]
+        # init
+        assert flag in ['train', 'test', 'val']
+        type_map = {'train':0, 'val':1, 'test':2}
+        self.set_type = type_map[flag]
+
+        self.root_path = root_path
+        self.data_path = data_path
+        self.__read_data__()
+
+    def __read_data__(self):
+        '''
+        数据格式说明：Entries: date, open price, high price, low price, close price, volume, movement percent(ajusted close price's movement percent)
+        Note: open, high, low, close prices are normalized values.
+        '''
+        self.scaler = StandardScaler() #标准正态分布函数
+        df_raw = pd.read_parquet(os.path.join(self.root_path, self.data_path))
+        df_raw = df_raw.rename(columns={0:"date", 1:"code"})  
+        length = len( df_raw)
+        num_train = int(length*0.7)
+        num_test = int(length*0.2)
+        num_vali = int(length*0.1)
+
+        border1s = [0, num_train-self.seq_len, num_train+num_vali-self.seq_len]
+        border2s = [num_train, num_train+num_vali, num_train+num_vali+num_test]
+        border1 = border1s[self.set_type]
+        border2 = border2s[self.set_type]
+
+        cols_data = df_raw.columns[2:]
+        df_data = df_raw[cols_data]
+
+        train_data = df_data[border1s[0]:border2s[0]]
+        self.scaler.fit(train_data.values) #从训练数据中计算方差和均值
+        data = self.scaler.transform(df_data.values) #把分布标准正态化
+
+        df_stamp = pd.DatetimeIndex(df_raw[border1:border2]['date']) #训练数据集的日期标签
+        data_stamp = time_features(df_stamp) #把日期时间序列转化为多个时间层次的序列，并且把序列的数值归一到【-0.5， +0.5】
+
+        self.data_x = data[border1:border2]
+        self.data_y = data[border1:border2]
+        self.data_stamp = data_stamp
+
+    def __getitem__(self, index):
+        s_begin = index
+        s_end = s_begin + self.seq_len
+        r_begin = s_end
+        r_end = r_begin + self.pred_len
+
+        seq_x = self.data_x[s_begin:s_end]
+        seq_y = self.data_y[r_begin:r_end, -1:] # adjust close price movement percent 作为target
+        seq_x_mark = self.data_stamp[s_begin:s_end] # 时间标签
+        seq_y_mark = self.data_stamp[r_begin:r_end]
+
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
+
+    def __len__(self):
+        return len(self.data_x) - self.seq_len - self.pred_len + 1

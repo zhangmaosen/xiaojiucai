@@ -6,16 +6,24 @@ class jiucai_net(denoise_net):
     def __init__(self, args):
         super().__init__(args)
         if args.use_attn :
-            self.attn = nn.MultiheadAttention(args.embed_dim, args.num_heads)
-            self.qkvproj = nn.Linear(args.embedding_dimension, 3 * args.embed_dim)
-    def forward(self, past_time_feat, mark, future_time_feat, t):
+            self.attn = nn.MultiheadAttention(args.head_dim, args.num_heads)
+            self.kvproj = nn.Linear(args.embedding_dimension, 2 * args.head_dim)
+            self.qproj = nn.Linear(args.query_embedding_dimension, args.head_dim)
+    def forward(self, past_time_feat, mark, future_time_feat, t, text_emb):
+        params = list(self.kvproj.named_parameters())
+        print(params[0])
+        print(params[1])
         input = self.embedding(past_time_feat, mark)
-        qkv = self.qkvproj(input)
-        q, k, v = qkv.chunk(3, dim=-1)
+        print(f'input is {input}')
+        kv = self.kvproj(input)
+        
+        print(f'kv is {kv}')
+        k, v = kv.chunk(2, dim=-1)
+        q = self.qproj(text_emb)
         print('attention doing')
-        self.attn(q, k, v)
+        attn_input = self.attn(q, k, v)
         # Output the distribution of the generative results, the sampled generative results and the total correlations of the generative model.
-        output, y_noisy = self.diffusion_gen(input, future_time_feat, t)
+        output, y_noisy = self.diffusion_gen(attn_input, future_time_feat, t)
         
         # Score matching.
         sigmas_t = self.extract(self.sigmas.to(y_noisy.device), t, y_noisy.shape)

@@ -1,5 +1,6 @@
 # -*-Encoding: utf-8 -*-
 from data_load.data_loader import Dataset_Custom
+from data_load.jiucai_data_loader import Jiucai_Dataset_Custom
 from model.model import diffusion_generate, denoise_net, pred_net
 from torch.optim.lr_scheduler import OneCycleLR, StepLR
 
@@ -50,7 +51,7 @@ class Exp_Model(object):
 
     def _get_data(self, flag):
         args = self.args
-        Data = Dataset_Custom
+        Data = Jiucai_Dataset_Custom #Dataset_Custom
         if flag == 'test' or flag == 'val':
             shuffle_flag = False; drop_last = True; batch_size = args.batch_size
         else:
