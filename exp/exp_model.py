@@ -101,7 +101,7 @@ class Exp_Model(object):
 
     def train(self, setting):
         train_data, train_loader = self._get_data(flag = 'train')
-        vali_data, vali_loader = self._get_data(flag = 'val')
+        # vali_data, vali_loader = self._get_data(flag = 'val')
         test_data, test_loader = self._get_data(flag = 'test')
         train_steps = len(train_loader)
         path = os.path.join(self.args.checkpoints, setting)
@@ -125,8 +125,8 @@ class Exp_Model(object):
                 x_mark = x_mark.float().to(self.device)
                 batch_y = batch_y[...,-self.args.target_dim:].float().to(self.device)
                 denoise_optim.zero_grad()
-                output, y_noisy, dsm_loss = self.denoise_net(batch_x, x_mark, batch_y, t)
-                recon = output.log_prob(y_noisy)
+                output, y_noisy, dsm_loss = self.denoise_net(batch_x, x_mark, batch_y, t) #output 是计算出的分布，y_noisy是添加噪音之后的信号
+                recon = output.log_prob(y_noisy) #根据分布和添加噪音的信后，进行去噪后重建信号，因为前面的信号被我截断，所以重建失败
                 mse_loss = criterion(output.sample(), y_noisy)
                 kl_loss = - torch.mean(torch.sum(recon, dim=[1, 2, 3]))
                 loss = mse_loss + self.args.zeta * kl_loss + self.args.eta * dsm_loss
@@ -144,14 +144,14 @@ class Exp_Model(object):
             kl = np.average(kl)
             dsm = np.average(dsm)
             mse = np.average(mse)
-            vali_mse = self.vali(vali_data, vali_loader, criterion)
+            # vali_mse = self.vali(vali_data, vali_loader, criterion)
 
             print("Epoch: {0}, Steps: {1} | MSE Loss: {2:.7f} KL Loss: {3:.7f} DSM Loss: {4:.7f} Overall Loss:{5:.7f}".format(
                 epoch + 1, train_steps, mse, kl, dsm, all_loss))
-            early_stopping(vali_mse, self.denoise_net, path)
-            if early_stopping.early_stop:
-                print("Early stopping")
-                break
+            # early_stopping(vali_mse, self.denoise_net, path)
+            # if early_stopping.early_stop:
+            #     print("Early stopping")
+            #     break
             adjust_learning_rate(denoise_optim, epoch+1, self.args)
         best_model_path = path+'/'+'checkpoint.pth'
         self.denoise_net.load_state_dict(torch.load(best_model_path))
@@ -173,6 +173,9 @@ class Exp_Model(object):
             preds.append(out.squeeze(1).detach().cpu().numpy())
             trues.append(batch_y.detach().cpu().numpy())
             input.append(batch_x[...,-1:].detach().cpu().numpy())
+        if preds is []:
+            print('data not enough for test!')
+            return 0
         preds = np.array(preds)
         trues = np.array(trues)
         noisy = np.array(noisy)

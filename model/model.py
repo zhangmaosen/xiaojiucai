@@ -79,6 +79,11 @@ class denoise_net(nn.Module):
         sigmas_t = self.extract(self.sigmas.to(y_noisy.device), t, y_noisy.shape)
         y = future_time_feat.unsqueeze(1).float()
         y_noisy1 = output.sample().float().requires_grad_()
+
+        ## 简单的截断会有问题
+        # y_noisy1 = y_noisy[:,:,0:y.size(2),:]
+        # y_noisy1.requires_grad_()
+        
         E = self.score_net(y_noisy1).sum()
 
         # The Loss of multiscale score matching.

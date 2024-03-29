@@ -127,7 +127,7 @@ class Encoder(nn.Module):
         c_scaling = self.channel_mult ** (self.num_preprocess_blocks) #4
         spatial_scaling = 2 ** (self.num_preprocess_blocks) #4
 
-        prior_ftr0_size = (int(c_scaling * self.num_channels_dec), args.prediction_length// spatial_scaling,
+        prior_ftr0_size = (int(c_scaling * self.num_channels_dec), args.sequence_length// spatial_scaling, # not prediction_length sequence_length
                            (args.embedding_dimension + args.hidden_size + 1) // spatial_scaling)
         self.prior_ftr0 = nn.Parameter(torch.rand(size=prior_ftr0_size), requires_grad=True)
         self.z0_size = [self.num_latent_per_group, args.prediction_length // spatial_scaling, (args.embedding_dimension+ args.hidden_size + 1) // spatial_scaling]
@@ -284,7 +284,7 @@ class Encoder(nn.Module):
         # print(s.shape)
         logits = self.image_conditional(s)
         logits = self.projection(logits[...,-(self.input_size + self.hidden_size):])
-        return logits
+        return logits[0:]
 
     def decoder_output(self, logits):
         return NormalDecoder(logits)

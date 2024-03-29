@@ -17,12 +17,12 @@ parser = argparse.ArgumentParser(description='generating')
 # Load data
 parser.add_argument('--root_path', type=str, default='./xiaojiucai_data/kline', help='root path of the data files')
 parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
-parser.add_argument('--sequence_length', type=int, default=10, help='length of input sequence')
+parser.add_argument('--sequence_length', type=int, default=20, help='length of input sequence')
 parser.add_argument('--prediction_length', type=int, default=None, help='prediction sequence length')
 parser.add_argument('--target_dim', type=int, default=1, help='dimension of target')
 parser.add_argument('--input_dim', type=int, default=7, help='dimension of input')
-parser.add_argument('--hidden_size', type=int, default=128, help='encoder dimension')
-parser.add_argument('--embedding_dimension', type=int, default=64, help='feature embedding dimension')
+parser.add_argument('--hidden_size', type=int, default=256, help='encoder dimension')
+parser.add_argument('--embedding_dimension', type=int, default=128, help='feature embedding dimension')
 
 # Diffusion process
 parser.add_argument('--diff_steps', type=int, default=1000, help='number of the diff step')
@@ -47,10 +47,10 @@ parser.add_argument('--num_channels_dec', type=int, default=32, help='number of 
 parser.add_argument('--num_latent_per_group', type=int, default=8, help='number of channels in latent variables per group')
 
 # Training settings
-parser.add_argument('--num_workers', type=int, default=1, help='data loader num workers') #set to 1 for debug
+parser.add_argument('--num_workers', type=int, default=0, help='data loader num workers') #set to 1 for debug
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
 parser.add_argument('--itr', type=int, default=5, help='experiment times')
-parser.add_argument('--train_epochs', type=int, default=20, help='train epochs')
+parser.add_argument('--train_epochs', type=int, default=30, help='train epochs')
 parser.add_argument('--batch_size', type=int, default=16, help='batch size of train input data')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='optimizer learning rate')
 parser.add_argument('--weight_decay', type=float, default=0.0000, help='weight decay')
@@ -67,9 +67,11 @@ args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
 if args.prediction_length is None:
     args.prediction_length = args.sequence_length
 
-print('Args in experiment:')
-print(args)
+# print('Args in experiment:')
+# print(args)
 if __name__ == '__main__':
+    print('Args in experiment:')
+    print(args)
     Exp = Exp_Model
     results = pd.DataFrame(columns=['Ticker', 'MSE', 'StdDev'])
     train_setting = 'tp{}_sl{}'.format(args.root_path.split(os.sep)[-1], args.sequence_length)
@@ -90,7 +92,7 @@ if __name__ == '__main__':
             all_mse.append(mse)
             torch.cuda.empty_cache()
 
-        need_concat = pd.DataFrame({'Ticker': ticker, 'MSE': np.mean(np.array(all_mse)), 'StdDev': np.std(np.array(all_mse))})
+        need_concat = pd.DataFrame({'Ticker': ticker, 'MSE': np.mean(np.array(all_mse)), 'StdDev': np.std(np.array(all_mse))}, index=[0])
         results = pd.concat([results, need_concat], ignore_index=True)
 
     folder_path = './results/'

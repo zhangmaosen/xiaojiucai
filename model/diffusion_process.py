@@ -113,7 +113,7 @@ class GaussianDiffusion(nn.Module):
 
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise.to(x_start.device))
 
-        y_noisy = self.q_sample_target(y_target=y_target, t=t, noise=noise1.to(y_target.device))
+        y_noisy = self.q_sample_target(y_target=y_target, t=t, noise=noise1.to(y_target.device)) # 对目标添加噪音，根据t的时间步骤，产生diffusion的噪音图像
         x_noisy = x_noisy.reshape(B,1, T,-1)
 
         y_noisy = y_noisy.reshape(B1,1, T1,-1)
