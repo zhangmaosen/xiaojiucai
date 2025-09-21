@@ -158,3 +158,92 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Data Science and Machine Learning
+# ================================
+# Jupyter
+.ipynb_checkpoints/
+papermill/
+
+# Data files
+*.csv
+*.tsv
+*.parquet
+*.h5
+*.hdf5
+*.feather
+*.pkl
+*.pickle
+*.joblib
+
+# Plot files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.pdf
+
+# Model files
+models/
+*.model
+*.h5
+*.pth
+*.pt
+*.onnx
+
+# Logs
+*.log
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Portfolio Optimization and Quant Finance Specific
+# ===============================================
+# Backtesting results
+backtest_results/
+backtests/
+results/
+
+# Risk models
+risk_models/
+factor_models/
+
+# Temporary data
+tmp/
+temp/
+
+# Cache
+.cache/
+__pycache__/
+
+# Configuration
+config.json
+settings.json
+secrets.json
+
+# Reports
+*.html
+reports/
+
+# TensorBoard logs
+logs/
+tensorboard/
+
+# Conda
+condaenv*.yaml
