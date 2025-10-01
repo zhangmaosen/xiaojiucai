@@ -1,47 +1,55 @@
-# 指数增强模型 (Index Enhanced Model) 与 投资组合优化 (Portfolio Optimization)
+# XiaoJiuCai - 小韭菜投资组合优化框架
 
 ## 项目简介
 
-本项目专注于开发和实现指数增强模型，通过先进的量化金融技术和机器学习算法来优化投资组合表现。项目旨在通过系统性的方法增强传统指数跟踪策略，实现超越基准指数的收益。
+XiaoJiuCai 是一个基于深度学习的投资组合优化框架，专注于使用神经网络和时间序列模型来优化投资组合配置。项目通过 PyTorch 实现了多种先进的网络架构，包括卷积神经网络、循环神经网络和注意力机制，以及时序基础模型 (TimesFM) 来处理金融时间序列数据。
 
 ## 核心功能
 
-### 1. 指数增强模型
-- **因子分析**: 多因子模型构建与分析，包括价值、动量、质量、规模等因子
-- **风险模型**: 高级风险模型构建，包括协方差矩阵估计和风险因子分解
-- **优化算法**: 多样化的投资组合优化算法实现
+### 1. 深度学习模型
+- **ConvNet**: 基于卷积神经网络的投资组合优化模型
+- **AttentionNet**: 基于注意力机制的时序数据处理模型
+- **HybridNet**: 混合神经网络，结合卷积、RNN和注意力机制
+- **TimesFM**: 时序基础模型，用于特征提取和预测
 
 ### 2. 投资组合优化
-- **均值方差优化**: 经典马科维茨投资组合优化
-- **风险平价**: 基于风险贡献的资产配置策略
-- **Black-Litterman模型**: 结合市场均衡和投资者观点的投资组合构建
-- **最小方差前沿**: 最小化投资组合风险的优化方法
+- **权重分配**: 基于Softmax的投资组合权重优化
+- **风险管理**: 协方差矩阵估计和风险度量
+- **收益优化**: 多种收益和风险指标的优化目标
 
-### 3. 回测框架
-- **历史回测**: 基于历史数据的策略性能评估
-- **业绩归因**: 投资组合收益来源分析
-- **风险分析**: 在险价值(VaR)、最大回撤等风险指标计算
+### 3. 损失函数与指标
+- **最大回撤**: MaximumDrawdown 损失函数
+- **平均收益**: MeanReturns 收益指标
+- **夏普比率**: SharpeRatio 风险调整收益指标
+- **自定义损失**: 可扩展的损失函数框架
+
+### 4. 回测与基准
+- **基准策略**: 等权重 (OneOverN)、随机分配 (Random) 等基准策略
+- **性能评估**: 完整的回测框架和性能分析工具
+- **可视化**: 投资组合表现和风险指标可视化
 
 ## 技术栈
 
-- **编程语言**: Python 3.x
-- **数值计算**: NumPy, SciPy
-- **数据分析**: Pandas, Matplotlib, Seaborn
-- **机器学习**: Scikit-learn
-- **金融计算**: PyPortfolioOpt, QuantLib (可选)
-- **可视化**: Plotly, Bokeh (可选)
+- **深度学习**: PyTorch
+- **数值计算**: NumPy
+- **数据分析**: Pandas
+- **可视化**: Matplotlib
+- **金融数据**: Yahoo Finance (yfinance)
+- **科学计算**: Scikit-learn
+- **开发环境**: Jupyter Notebook
 
 ## 安装指南
 
 ### 环境要求
 - Python 3.7+
-- pip 或 conda
+- PyTorch 1.7.0+
+- CUDA (可选，用于GPU加速)
 
 ### 安装步骤
 
 ```bash
 # 克隆项目
-git clone <项目地址>
+git clone https://github.com/zhangmaosen/xiaojiucai.git
 cd xiaojiucai
 
 # 创建虚拟环境 (推荐)
@@ -53,54 +61,124 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
+### GPU 支持
+
+如果您有NVIDIA GPU并希望使用CUDA加速，请确保安装了适当版本的PyTorch：
+
+```bash
+# 安装支持CUDA的PyTorch (根据您的CUDA版本选择)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
 ## 使用方法
+
+### 快速开始
+
+运行示例代码来了解框架的基本用法：
+
+```bash
+# 运行基本示例
+python examples/getting_started.py
+
+# 或使用Jupyter Notebook
+jupyter notebook notebooks/getting_started.ipynb
+```
 
 ### 基本用法
 
 ```python
-# 示例代码
-from portfolio_optimizer import PortfolioOptimizer
+import torch
+from xiaojiucai.models.networks import ConvNet
+from xiaojiucai.data.load import InRAMDataset, RigidDataLoader
+from xiaojiucai.experiments import Run
+from xiaojiucai.losses import SharpeRatio
 
-# 初始化优化器
-optimizer = PortfolioOptimizer()
+# 创建模型
+model = ConvNet(
+    n_assets=7,  # MAG7 股票数量
+    lookback=60,  # 回看期
+    n_channels=5,  # 特征维度
+    hidden_channels=[32, 64, 128]
+)
 
 # 加载数据
-data = optimizer.load_data('data/sample_data.csv')
+dataset = InRAMDataset(
+    returns=returns_data,
+    features=features_data,
+    targets=targets_data,
+    lookback=60
+)
 
-# 执行优化
-weights = optimizer.optimize(data, method='mean_variance')
+dataloader = RigidDataLoader(
+    dataset,
+    batch_size=32,
+    shuffle=True
+)
 
-# 生成报告
-optimizer.generate_report(weights)
+# 创建实验
+experiment = Run(
+    model=model,
+    loaders=(train_loader, val_loader),
+    loss=SharpeRatio(),
+    device="cuda" if torch.cuda.is_available() else "cpu"
+)
+
+# 训练模型
+results = experiment.launch()
 ```
 
-### 配置参数
+### MAG7 投资组合优化示例
 
-项目支持多种配置选项，可通过配置文件或直接在代码中设置：
+项目包含一个完整的 MAG7 股票（微软、苹果、谷歌、亚马逊、特斯拉、英伟达和 Meta）投资组合优化示例：
 
-- 风险偏好系数
-- 约束条件（权重上下限、行业暴露等）
-- 交易成本模型
-- 市场冲击模型
+```bash
+# 下载 MAG7 数据
+python scripts/download_mag7_data.py
+
+# 运行投资组合优化
+jupyter notebook notebooks/mag7_portfolio_optimization.ipynb
+```
 
 ## 项目结构
 
 ```
 xiaojiucai/
-├── data/                  # 数据文件
-├── models/                # 模型实现
-├── optimization/          # 优化算法
-├── backtest/              # 回测框架
-├── risk_models/           # 风险模型
-├── factor_models/         # 因子模型
-├── reports/               # 报告输出
-├── utils/                 # 工具函数
-├── tests/                 # 测试代码
-├── examples/              # 示例代码
-├── notebooks/             # Jupyter Notebooks
-├── docs/                  # 文档
-├── README.md              # 项目说明
-└── requirements.txt       # 依赖列表
+├── xiaojiucai/                # 主要代码包
+│   ├── models/                # 神经网络模型
+│   │   ├── base.py           # 基础模型类
+│   │   └── networks.py       # 网络模型实现
+│   ├── layers/               # 神经网络层
+│   │   ├── allocate.py       # 权重分配层
+│   │   ├── collapse.py       # 维度压缩层
+│   │   ├── misc.py          # 其他工具层
+│   │   └── transform.py     # 数据变换层
+│   ├── losses/               # 损失函数
+│   │   ├── base.py          # 基础损失函数
+│   │   ├── returns.py       # 收益相关损失
+│   │   └── risk.py          # 风险相关损失
+│   ├── data/                 # 数据处理
+│   │   ├── load.py          # 数据加载
+│   │   └── augment.py       # 数据增强
+│   ├── benchmarks/           # 基准策略
+│   ├── callbacks/            # 训练回调
+│   ├── experiments/          # 实验框架
+│   ├── utils/                # 工具函数
+│   └── visualize/            # 可视化工具
+├── data/                     # 数据文件
+│   ├── mag7_data_raw.parquet # 原始MAG7数据
+│   └── mag7_data.csv        # 处理后的数据
+├── models/                   # 训练好的模型
+├── notebooks/                # Jupyter Notebooks
+│   ├── getting_started.ipynb
+│   ├── mag7_portfolio_optimization.ipynb
+│   ├── timesfm_feature_extraction.ipynb
+│   └── timesfm_portfolio_optimization.ipynb
+├── examples/                 # 示例代码
+│   └── getting_started.py
+├── scripts/                  # 实用脚本
+│   └── download_mag7_data.py
+├── README.md                # 项目说明
+└── requirements.txt         # 依赖列表
 ```
 
 ## Jupyter Notebook 示例

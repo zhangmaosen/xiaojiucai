@@ -4,9 +4,19 @@
 - 基于收益率的损失函数(MeanReturns, SharpeRatio等)
 - 基于风险的损失函数(MaximumDrawdown等)
 - 复合损失函数(通过运算符组合多个损失函数)
+- TimesFM投资组合优化损失函数
 
 所有损失函数都设计为最小化目标。如果类名暗示相反(如MeanReturns)，则在计算时取负值。
 """
+
+# 添加投资组合优化损失函数
+from .portfolio_loss import (
+    portfolio_loss,
+    PortfolioLoss,
+    MeanVarianceLoss, 
+    SharpeRatioLoss,
+    calculate_portfolio_metrics
+)
 
 from .base import Loss, log2simple, simple2log
 from .returns import MeanReturns, SharpeRatio
